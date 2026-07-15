@@ -16,41 +16,33 @@ Orchestration is centralized in `annotation/cli.py`. For each `(gene, organism)`
 4. Computes a **coverage report** and exports files.
 
 ```{mermaid}
+%%{init: {'theme':'neutral','flowchart':{'curve':'basis'}}}%%
 flowchart TB
-    subgraph input [Input]
-        F[gene,organism]
-    end
+    F[gene,organism]
 
-    subgraph core [Primary sources]
-        NCBI[NCBI Entrez]
-        ENS[Ensembl REST]
-    end
-
-    subgraph derived [Derived sources]
-        UP[UniProt]
-        PS[ProSite]
-        PF[Pfam / InterPro]
-        GO[Gene Ontology]
-    end
-
-    subgraph independent [Independent sources]
-        STR[STRING]
-        KEGG[KEGG]
-        PDB[PDB / RCSB]
-    end
+    NCBI[NCBI Entrez]
+    ENS[Ensembl REST]
+    UP[UniProt]
+    PS[ProSite]
+    PF[Pfam / InterPro]
+    GO[Gene Ontology]
+    STR[STRING]
+    KEGG[KEGG]
+    PDB[PDB / RCSB]
+    ROW[Annotated row]
 
     F --> NCBI
     F --> ENS
+    F --> STR
+    F --> PDB
     NCBI --> UP
     ENS --> UP
+    NCBI --> KEGG
     UP --> PS
     UP --> PF
     UP --> GO
-    F --> STR
-    NCBI --> KEGG
-    F --> PDB
 
-    NCBI --> ROW[Annotated row]
+    NCBI --> ROW
     ENS --> ROW
     UP --> ROW
     PS --> ROW
