@@ -1,0 +1,151 @@
+---
+title: "Desktop App"
+---
+
+# Desktop application (Linux / Windows)
+
+GeneWeave can be distributed as **standalone binaries** — no Python installation required on the end-user machine.
+
+## Binaries
+
+| Binary | Role |
+|--------|------|
+| `GeneWeave` / `GeneWeave.exe` | Desktop GUI (Tkinter) |
+| `geneweave-cli` / `geneweave-cli.exe` | Command-line annotation |
+| `geneweave-viewer` / `geneweave-viewer.exe` | Local web viewer |
+
+## Download a release
+
+If a GitHub Release exists (tag `v*`), download the archive for your platform:
+
+- Linux: `GeneWeave-<version>-linux.tar.gz`
+- Windows: `GeneWeave-<version>-windows.zip`
+
+Extract it, then run the GUI binary.
+
+### Linux
+
+```bash
+tar -xzf GeneWeave-1.1.0-linux.tar.gz
+./GeneWeave
+```
+
+### Windows
+
+Unzip the archive, then double-click `GeneWeave.exe`.
+
+## Data and cache location
+
+| Install mode | Results / cache location |
+|--------------|--------------------------|
+| Portable binary (extracted archive) | Next to the executable (`results/`, `.cache/`) |
+| `.deb` system install (`/opt/geneweave`) | `~/.local/share/geneweave/` |
+
+Internet access is required to query NCBI, Ensembl, UniProt, and the other APIs.
+
+## Debian / Ubuntu package (`.deb`)
+
+No `fpm` needed — `scripts/build_deb.sh` uses `dpkg-deb` (standard on Ubuntu).
+
+```bash
+bash scripts/build_linux.sh   # produce dist/ binaries first
+bash scripts/build_deb.sh
+```
+
+Output: `dist/geneweave_<version>_<arch>.deb`
+
+### Install
+
+```bash
+sudo apt install ./dist/geneweave_1.1.0_amd64.deb
+# or
+sudo dpkg -i ./dist/geneweave_1.1.0_amd64.deb
+```
+
+After install:
+
+| Command | Role |
+|---------|------|
+| `geneweave-gui` | Desktop GUI (also listed in the Softwares menu as **GeneWeave**) |
+| `geneweave` | CLI |
+| `geneweave-viewer` | Local web viewer |
+
+Uninstall:
+
+```bash
+sudo apt remove geneweave
+```
+
+## Build from source (portables)
+
+Install build dependencies, then run the platform script from the project root.
+
+```bash
+pip install -r requirements.txt -r requirements-build.txt
+```
+
+### Linux
+
+```bash
+bash scripts/build_linux.sh
+```
+
+Produces:
+
+- `dist/GeneWeave`
+- `dist/geneweave-cli`
+- `dist/geneweave-viewer`
+- `dist/GeneWeave-<version>-linux.tar.gz`
+
+### Windows
+
+```bat
+scripts\build_windows.bat
+```
+
+Produces:
+
+- `dist\GeneWeave.exe`
+- `dist\geneweave-cli.exe`
+- `dist\geneweave-viewer.exe`
+- `dist\GeneWeave-<version>-windows.zip`
+
+The PyInstaller recipe lives in `packaging/geneweave.spec`.
+
+::: {.callout-note}
+## Virtual environment
+The build scripts automatically use `.venv/` when present. Create one with `python3 -m venv .venv` if you prefer an isolated build.
+:::
+
+## Continuous integration
+
+The workflow `.github/workflows/build-desktop.yml`:
+
+- Builds on **Ubuntu** and **Windows**;
+- Uploads artifacts for each OS;
+- On a version tag (`v1.1.0`, …), publishes a **GitHub Release** with the archives.
+
+Trigger manually (**Actions → Build desktop binaries**) or push a tag:
+
+```bash
+git tag v1.1.0
+git push origin v1.1.0
+```
+
+## CLI usage of the packaged binary
+
+```bash
+# Linux
+./geneweave-cli data/GeneSymbols_2.txt --limit 3
+./geneweave-cli --gene RAD51,homo_sapiens --excel --json
+./geneweave-viewer --open
+
+# Windows
+geneweave-cli.exe genes.txt --dry-run
+geneweave-viewer.exe --dir results --open
+```
+
+## Links in the HTML report
+
+Database IDs (NCBI, AmiGO, UniProt, …) open in a **new browser tab**.  
+This avoids loading external sites inside the viewer iframe (those sites block framing).

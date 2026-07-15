@@ -1,0 +1,145 @@
+---
+title: "Output Files"
+---
+
+# Output files
+
+All outputs are written to the **`results/`** folder by default (configurable via `--output-dir`).
+
+## Naming convention
+
+For an input file `genes.txt`, outputs use the prefix `results/genes`:
+
+| File | Required option |
+|------|-----------------|
+| `genes_annotation.html` | always (except `--csv-only`) |
+| `genes_annotation.csv` | always (except `--html-only`) |
+| `genes_annotation.xlsx` | `--excel` |
+| `genes_annotation.json` | `--json` |
+| `genes_summary.txt` | always |
+| `genes_manifest.json` | always |
+
+For a single gene (`--gene RAD51,homo_sapiens`):
+
+```text
+results/RAD51_homo_sapiens_annotation.html
+results/RAD51_homo_sapiens_summary.txt
+...
+```
+
+## Format descriptions
+
+### HTML (`*_annotation.html`)
+
+- Interactive table with **DataTables** (sort, search, pagination);
+- Color-coded cells by source (NCBI, Ensembl, UniProt, etc.);
+- Clickable links to databases — each ID opens in a **new browser tab**;
+- Coverage report at the bottom of the page.
+
+Open directly in a browser or via the Flask viewer.
+When viewed inside the GeneWeave web viewer, external sites are never loaded in the iframe (they block framing); the link opens a new tab instead.
+### CSV (`*_annotation.csv`)
+
+- **Semicolon** (`;`) separator — Excel-friendly in many locales;
+- Plain text (HTML links converted to text);
+- UTF-8 encoding.
+
+### Excel (`*_annotation.xlsx`)
+
+- "Annotations" sheet with formatted headers;
+- Auto-sized columns;
+- Requires `openpyxl`.
+
+### JSON (`*_annotation.json`)
+
+Structure:
+
+```json
+{
+  "columns": ["Gene Symbol and Organism", "..."],
+  "rows": [["RAD51,homo_sapiens", "..."], "..."],
+  "summary": {
+    "total_genes": 12,
+    "coverage_percent": 72.3,
+    "errors": []
+  },
+  "metadata": {
+    "version": "1.1.0",
+    "generated_at": "2026-07-06T21:48:01Z"
+  }
+}
+```
+
+Suitable for integration into bioinformatics pipelines.
+
+### Text summary (`*_summary.txt`)
+
+Human-readable report listing:
+
+- Genes analyzed and complete genes;
+- Overall coverage (%);
+- Per-column statistics;
+- Failed genes (if any).
+
+### Manifest (`*_manifest.json`)
+
+Run metadata:
+
+```json
+{
+  "version": "1.1.0",
+  "generated_at": "2026-07-06T21:48:01Z",
+  "duration_seconds": 45.2,
+  "total_genes": 12,
+  "coverage_percent": 72.3,
+  "errors": [],
+  "outputs": {
+    "html": "results/genes_annotation.html",
+    "csv": "results/genes_annotation.csv"
+  }
+}
+```
+
+Useful for tracking runs and automating workflows.
+
+## Local cache
+
+| File | Location | Description |
+|------|----------|-------------|
+| `gene_annotations.json` | `.cache/` | One entry per annotated gene (raw table data) |
+
+Useful commands:
+
+```bash
+python3 main.py --cache-info
+python3 main.py genes.txt --clear-cache
+python3 main.py genes.txt --no-cache
+```
+
+## Interpreting "No data found"
+
+A `No data found` cell means **the queried database returned no result** for that gene and organism. Common causes:
+
+- Poorly annotated organism in Ensembl or UniProt;
+- Ambiguous or obsolete gene symbol;
+- No PDB structure or KEGG pathway for that gene;
+- Temporary API limit (retry later).
+
+This is **not a pipeline error** — annotation of other columns continues normally.
+
+## Project folders
+
+```text
+projet NGS/
+├── annotation/              # Core Python package
+│   ├── cli.py               # CLI orchestration
+│   ├── gui.py               # Tkinter GUI
+│   ├── config.py            # Configuration
+│   ├── databases/           # API clients
+│   └── templates/           # HTML table templates
+├── viewer/                  # Flask web viewer
+├── data/                    # Sample input files
+├── docs/                    # Quarto documentation
+├── results/                 # Default output directory
+└── main.py                  # CLI entry point
+```

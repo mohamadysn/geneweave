@@ -1,0 +1,45 @@
+project:
+  type: website
+  output-dir: _site
+  preview:
+    port: 8088
+    browser: true
+
+website:
+  title: "GeneWeave"
+  description: "Multi-database gene annotation — NCBI, Ensembl, UniProt, and more"
+  # Overridden by CI: https://<user>.github.io/<repo>/
+  site-url: https://mohamadysn.github.io/geneweave/
+  navbar:
+    background: primary
+    left:
+      - href: index.qmd
+        text: Home
+      - href: prerequisites.qmd
+        text: Prerequisites
+      - href: usage.qmd
+        text: Usage
+      - href: desktop.qmd
+        text: Desktop App
+      - href: how-it-works.qmd
+        text: How It Works
+      - href: output-files.qmd
+        text: Output Files
+    search: true
+  page-footer:
+    left: "GeneWeave — NCBI, Ensembl, UniProt, and more"
+    right: "Version 1.1.0"
+
+format:
+  html:
+    theme:
+      light: cosmo
+      dark: darkly
+    toc: true
+    toc-depth: 3
+    code-copy: true
+    code-overflow: wrap
+    lang: en
+    smooth-scroll: true
+
+lang: en

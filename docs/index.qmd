@@ -1,0 +1,101 @@
+---
+title: "Home"
+---
+
+# GeneWeave
+
+Welcome to the **GeneWeave** documentation. GeneWeave automatically queries **ten public databases** to enrich a gene list and produces ready-to-use reports (HTML, CSV, Excel, JSON).
+
+> **GeneWeave** = *gene* + *weave* — weaving together annotations from NCBI, Ensembl, UniProt, and more into one unified table.
+
+## Purpose
+
+From a text file containing `GENE,organism` pairs, the tool:
+
+1. **Queries** NCBI, Ensembl, UniProt, STRING, ProSite, Pfam, PDB, KEGG, and Gene Ontology;
+2. **Consolidates** identifiers, links, and annotations into a single table;
+3. **Generates** reports with coverage statistics;
+4. **Caches** results to speed up subsequent runs.
+
+## Quick start
+
+### From source (Python)
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Annotate the sample file (12 genes)
+python3 main.py data/GeneSymbols_2.txt
+
+# Browse results in your browser
+python3 viewer.py --open
+```
+
+Output files are written to the `results/` folder by default.
+
+### Desktop binary (no Python)
+
+Build or download a release for your OS — see [Desktop App](desktop.qmd):
+
+```bash
+# Linux example after extract
+./GeneWeave
+```
+
+## Documentation structure
+
+| Page | Content |
+|------|---------|
+| [Prerequisites](prerequisites.qmd) | Environment, dependencies, configuration |
+| [Usage](usage.qmd) | Command line, GUI, web viewer |
+| [Desktop App](desktop.qmd) | Standalone Linux / Windows binaries |
+| [How It Works](how-it-works.qmd) | Pipeline, databases, architecture |
+| [Output Files](output-files.qmd) | Output formats and interpretation |
+
+## Databases queried
+
+::: {.panel-tabset}
+
+### Genomic reference
+- **NCBI** — gene IDs, RefSeq transcripts, proteins
+- **Ensembl** — IDs, genome browser, orthologs
+
+### Proteins and domains
+- **UniProt** — accession and official name
+- **ProSite** — functional motifs
+- **Pfam** — protein domains
+
+### Networks and pathways
+- **STRING** — protein–protein interactions
+- **KEGG** — IDs and metabolic pathways
+- **Gene Ontology (GO)** — molecular function, biological process, cellular component
+
+### 3D structure
+- **PDB** — crystallographic structures
+
+:::
+
+## Overview diagram
+
+```{mermaid}
+flowchart LR
+    A[GENE,organism file] --> B[main.py]
+    B --> C[NCBI / Ensembl]
+    C --> D[UniProt]
+    D --> E[ProSite / Pfam / GO]
+    B --> F[STRING / KEGG / PDB]
+    E --> G[Reports]
+    F --> G
+    G --> H[results/]
+    G --> I[Local cache]
+    H --> J[viewer.py]
+```
+
+Build this documentation:
+
+```bash
+python3 docs/render.py
+```
+
+This starts an HTTP preview server and opens your default browser.

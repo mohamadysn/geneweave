@@ -1,0 +1,194 @@
+---
+title: "Usage"
+---
+
+# Usage guide
+
+The tool offers **three access modes** from source (command line, GUI, web viewer), plus optional [standalone desktop binaries](desktop.qmd) for Linux and Windows.
+
+## Input format
+
+Create a text file (`.txt`) with one **gene symbol, organism** pair per line:
+
+```text
+# genes.txt
+RAD51,homo_sapiens
+TP53,homo_sapiens
+DMD,mus_musculus
+```
+
+- Blank lines and comments (`#`) are ignored.
+- The organism must follow Ensembl naming: `homo_sapiens`, `mus_musculus`, `arabidopsis_thaliana`, etc.
+- Duplicates are automatically skipped.
+
+---
+
+## Command line (`main.py`)
+
+### Standard annotation
+
+```bash
+python3 main.py data/GeneSymbols_2.txt
+```
+
+By default, produces in `results/`:
+
+- `GeneSymbols_2_annotation.html`
+- `GeneSymbols_2_annotation.csv`
+- `GeneSymbols_2_summary.txt`
+- `GeneSymbols_2_manifest.json`
+
+### Main options
+
+| Option | Description |
+|--------|-------------|
+| `--gene GENE,org` | Annotate a single gene without a file |
+| `--limit N` | Process only the first N genes |
+| `--dry-run` | List genes without calling APIs |
+| `--excel` | Add Excel export (`.xlsx`) |
+| `--json` | Add structured JSON export |
+| `--output-dir DIR` | Custom output directory |
+| `--serve` | Open the web viewer when finished |
+| `--workers N` | Parallelism (1–4 simultaneous genes) |
+| `--no-cache` | Ignore the local cache |
+| `--clear-cache` | Clear cache before running |
+| `--cache-info` | Show cache statistics |
+| `-v` | Verbose logs |
+| `--log-file FILE` | Write logs to a file |
+| `--html-only` | Generate HTML only |
+| `--csv-only` | Generate CSV only |
+
+### Examples
+
+```bash
+# Single gene
+python3 main.py --gene RAD51,homo_sapiens
+
+# Quick test on 3 genes
+python3 main.py data/GeneSymbols_2.txt --limit 3
+
+# All formats + auto-open viewer
+python3 main.py data/GeneSymbols_2.txt --excel --json --serve
+
+# Parallel with logs
+python3 main.py data/GeneSymbols_2.txt --workers 2 -v --log-file results/run.log
+
+# Full re-annotation (no cache)
+python3 main.py data/GeneSymbols_2.txt --no-cache --clear-cache
+```
+
+### Console output
+
+At the end of a run, a **coverage report** is printed:
+
+```text
+=== Annotation Report ===
+Genes analyzed      : 12
+Complete genes      : 0
+Overall coverage    : 72.3%
+From cache / fetched : 10 / 2
+Duration            : 45.2s
+```
+
+---
+
+## Graphical interface (`interface.py`)
+
+```bash
+python3 interface.py
+```
+
+The Tkinter GUI lets you:
+
+- Choose a **text file** or enter a **single gene**;
+- Set the **output folder** (default: `results/`);
+- Toggle cache, HTML, CSV, Excel, JSON;
+- Adjust **parallel workers** (1–4);
+- Show a **progress bar** during annotation;
+- **Open the viewer** automatically after the run.
+
+::: {.callout-tip}
+## Tip
+For long gene lists, prefer the command line with `--workers` and `--log-file` — more stable and reproducible.
+:::
+
+---
+
+## Web viewer (`viewer.py`)
+
+After an annotation run, launch the local viewer:
+
+```bash
+python3 viewer.py --open
+```
+
+Default address: `http://127.0.0.1:5000`
+
+### Features
+
+- List of available results in `results/`
+- Coverage statistics per run
+- Embedded interactive table (iframe)
+- CSV, Excel, JSON downloads
+- Database ID links open in a **new browser tab** (NCBI, AmiGO, UniProt, etc.)
+
+### Options
+
+```bash
+python3 viewer.py --port 8080
+python3 viewer.py --dir ./my_run --open
+python3 viewer.py --host 0.0.0.0 --port 5000   # local network access
+```
+
+::: {.callout-note}
+## External links
+Sites such as NCBI refuse to load *inside* the viewer iframe (`X-Frame-Options`).  
+GeneWeave therefore opens every database link in a new tab so the report stays visible.
+:::
+
+---
+
+## Desktop binaries
+
+To ship GeneWeave without requiring Python on user machines, see [Desktop App](desktop.qmd):
+
+```bash
+bash scripts/build_linux.sh          # → dist/GeneWeave, geneweave-cli, …
+scripts\build_windows.bat            # → dist\GeneWeave.exe, …
+```
+
+---
+
+## Recommended workflow
+
+```{mermaid}
+flowchart TD
+    A[Prepare genes.txt] --> B{Mode?}
+    B -->|CLI| C[python3 main.py genes.txt]
+    B -->|GUI| D[python3 interface.py]
+    C --> E[results/]
+    D --> E
+    E --> F[python3 viewer.py --open]
+    F --> G[Review coverage and links]
+```
+
+1. **Prepare** the input file and validate with `--dry-run`.
+2. **Run** annotation (first run: allow several minutes).
+3. **Review** the HTML report or web viewer.
+4. **Re-run** as needed — the cache speeds up repeated genes.
+
+---
+
+## Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| NCBI error / rate limit | Reduce `--workers`, increase `NCBI_DELAY` |
+| Ensembl timeout / empty Ensembl columns | Retries are automatic (3×, 60s). Re-run the gene or raise `ANNOTATION_HTTP_TIMEOUT` |
+| Entire row shows `ERROR: …` and No data found | Older behavior; update and re-run — other databases are kept if one API fails |
+| `No data found` everywhere | Check organism format (`homo_sapiens`) |
+| GUI won't start | Install `python3-tk` |
+| Excel export fails | `pip install openpyxl` |
+| Empty viewer | Ensure `results/` contains `*_annotation.html` files |
+| Link says site “won't allow the connection” | Reload the viewer; links must open in a **new tab** (see above). Re-run annotation if the HTML was generated with an older build |
+| Packaged GUI missing templates | Rebuild with `scripts/build_linux.sh` or `scripts/build_windows.bat` |

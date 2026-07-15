@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "geneweave"
+version = "1.1.0"
+description = "GeneWeave — multi-database gene annotation (NCBI, Ensembl, UniProt, etc.)"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "biopython>=1.80",
+    "requests>=2.28",
+    "tqdm>=4.65",
+    "openpyxl>=3.1",
+    "flask>=3.0",
+]
+
+[project.scripts]
+annotate-genes = "annotation.cli:main"
+geneweave = "annotation.cli:main"
+annotation-viewer = "viewer.app:main"
+annotation-gui = "annotation.gui:interface"
+
+[tool.setuptools.packages.find]
+include = ["annotation*", "viewer*"]
+
+[tool.setuptools.package-data]
+annotation = ["templates/*.html"]
+viewer = ["templates/*.html"]

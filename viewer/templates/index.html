@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}GeneWeave Viewer{% endblock %}
+{% block content %}
+<header>
+  <div>
+    <h1>GeneWeave Viewer</h1>
+    <p>Browse multi-database annotation results</p>
+  </div>
+</header>
+
+{% if results %}
+<div class="grid">
+  {% for r in results %}
+  <div class="card">
+    <h2>{{ r.name }}</h2>
+    <div class="meta">Modified on {{ r.modified }}</div>
+
+    {% if r.summary %}
+    <div class="stats">
+      <div class="stat">
+        <div class="value">{{ r.summary.total_genes }}</div>
+        <div class="label">Genes</div>
+      </div>
+      <div class="stat">
+        <div class="value">{{ r.summary.coverage_percent }}%</div>
+        <div class="label">Coverage</div>
+      </div>
+      <div class="stat">
+        <div class="value">{{ r.summary.complete_genes }}</div>
+        <div class="label">Complete</div>
+      </div>
+    </div>
+    <div class="coverage-bar"><span style="width: {{ r.summary.coverage_percent }}%"></span></div>
+    {% else %}
+    <p class="meta">No summary report available.</p>
+    {% endif %}
+
+    <div class="actions">
+      <a class="btn" href="{{ url_for('view_result', name=r.name) }}">View</a>
+      {% if r.csv_file %}
+      <a class="btn btn-secondary" href="{{ url_for('serve_file', filename=r.csv_file) }}">CSV</a>
+      {% endif %}
+      {% if r.xlsx_file %}
+      <a class="btn btn-secondary" href="{{ url_for('serve_file', filename=r.xlsx_file) }}">Excel</a>
+      {% endif %}
+      {% if r.json_file %}
+      <a class="btn btn-secondary" href="{{ url_for('serve_file', filename=r.json_file) }}">JSON</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty">
+  <h2>No results found</h2>
+  <p>Run an annotation first:</p>
+  <code>python3 main.py GeneSymbols_2.txt</code>
+</div>
+{% endif %}
+{% endblock %}

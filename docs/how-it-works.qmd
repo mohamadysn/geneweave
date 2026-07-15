@@ -1,0 +1,193 @@
+---
+title: "How It Works"
+---
+
+# How the tool works
+
+This page describes the **architecture**, **annotation pipeline**, and the role of each database.
+
+## Overview
+
+Orchestration is centralized in `annotation/cli.py`. For each `(gene, organism)` pair, the pipeline:
+
+1. Checks the **local cache** (`.cache/gene_annotations.json`);
+2. Queries APIs in a logical order (NCBI → Ensembl → UniProt → derived databases);
+3. Assembles a **24-column row** with clickable HTML links;
+4. Computes a **coverage report** and exports files.
+
+```{mermaid}
+flowchart TB
+    subgraph input [Input]
+        F[gene,organism]
+    end
+
+    subgraph core [Primary sources]
+        NCBI[NCBI Entrez]
+        ENS[Ensembl REST]
+    end
+
+    subgraph derived [Derived sources]
+        UP[UniProt]
+        PS[ProSite]
+        PF[Pfam / InterPro]
+        GO[Gene Ontology]
+    end
+
+    subgraph independent [Independent sources]
+        STR[STRING]
+        KEGG[KEGG]
+        PDB[PDB / RCSB]
+    end
+
+    F --> NCBI
+    F --> ENS
+    NCBI --> UP
+    ENS --> UP
+    UP --> PS
+    UP --> PF
+    UP --> GO
+    F --> STR
+    NCBI --> KEGG
+    F --> PDB
+
+    NCBI --> ROW[Annotated row]
+    ENS --> ROW
+    UP --> ROW
+    PS --> ROW
+    PF --> ROW
+    GO --> ROW
+    STR --> ROW
+    KEGG --> ROW
+    PDB --> ROW
+```
+
+## Python modules
+
+| File | Role |
+|------|------|
+| `annotation/cli.py` | CLI, parallelism, orchestration, HTML export |
+| `annotation/databases/ncbi.py` | Entrez queries (Biopython), retries, rate limiting |
+| `annotation/databases/ensembl.py` | Ensembl REST API (genes, transcripts, orthologs) |
+| `annotation/databases/uniprot.py` | ID mapping (NCBI/Ensembl → UniProt) |
+| `annotation/databases/prosite.py` | ProSite motif scanning |
+| `annotation/databases/pfam.py` | Domains via InterPro API |
+| `annotation/databases/go.py` | Gene Ontology annotations |
+| `annotation/databases/string_db.py` | STRING IDs and networks |
+| `annotation/databases/kegg.py` | KEGG IDs and pathways |
+| `annotation/databases/pdb.py` | Structures via RCSB Search API v2 |
+| `annotation/cache.py` | Thread-safe per-gene JSON cache |
+| `annotation/export.py` | CSV, Excel, JSON |
+| `annotation/summary.py` | Coverage statistics |
+| `annotation/paths.py` | Output paths (`results/`) |
+| `annotation/config.py` | Global configuration |
+| `viewer/app.py` | Flask browsing application |
+| `annotation/gui.py` | Tkinter graphical interface |
+
+## Per-gene pipeline
+
+The function `annotate_gene(gene_symbol, organism)` runs these steps:
+
+### 1. NCBI (`ncbi.py`)
+
+- Search gene by symbol and organism;
+- Fetch official name, gene IDs, RefSeq RNA/protein transcripts;
+- Convert organism name to NCBI taxonomy;
+- **Rate limiting**: configurable delay (`NCBI_DELAY`) between Entrez calls.
+
+### 2. Ensembl (`ensembl.py`)
+
+- Look up Ensembl gene ID;
+- Links to genome browser and orthologs page;
+- Associated transcript and protein IDs;
+- Multi-division support (vertebrates, plants, protists, etc.).
+
+### 3. UniProt (`uniprot.py`)
+
+- Map NCBI and/or Ensembl IDs to UniProt accessions;
+- Text search fallback if mapping fails;
+- Official protein name.
+
+### 4. ProSite and Pfam
+
+- **ProSite**: motif scan on UniProt sequences;
+- **Pfam**: protein domains via InterPro API (replaces the legacy Pfam XML API).
+
+### 5. STRING (`String_id_and_network.py`)
+
+- STRING identifier and interaction network link;
+- Network image (when available).
+
+### 6. PDB (`PDB.py`)
+
+- 3D structure search via RCSB API v2;
+- Links to matching PDB entries.
+
+### 7. KEGG (`kegg.py`)
+
+- KEGG identifier and associated pathways;
+- Direct REST API (`rest.kegg.jp`).
+
+### 8. Gene Ontology (`GO.py`)
+
+- GO terms: molecular function, biological process, cellular component;
+- Based on UniProt IDs.
+
+## Output table columns
+
+The final table has **24 columns**:
+
+| # | Column | Source |
+|---|--------|--------|
+| 1 | Gene Symbol and Organism | User input |
+| 2–5 | NCBI (name, gene ID, RNA, protein) | NCBI |
+| 6–10 | Ensembl (gene ID, browser, transcript, protein, orthologs) | Ensembl |
+| 11–12 | UniProt ID and name | UniProt |
+| 13–14 | STRING ID and network | STRING |
+| 15–16 | ProSite motifs and graphical view | ProSite |
+| 17–18 | Pfam domains and graphical view | Pfam |
+| 19 | PDB Structure | PDB |
+| 20–21 | KEGG ID and pathways | KEGG |
+| 22–24 | GO (F, C, P) | Gene Ontology |
+
+Cells with no data display **`No data found`**.
+
+## Cache and parallelism
+
+### Cache
+
+- File: `.cache/gene_annotations.json`
+- Key: `GENE|organism` (normalized)
+- Thread-safe for parallel mode
+- Invalidate with `--clear-cache` or manual deletion
+
+### Parallelism
+
+- Up to **4 workers** (`--workers`, `MAX_WORKERS`)
+- Each worker processes one gene independently
+- Cache avoids redundant requests across sessions
+
+::: {.callout-warning}
+## API rate limits
+NCBI recommends ≤ 3 requests/second without an API key. With `--workers 2` or more, watch for errors and increase `NCBI_DELAY` if needed.
+:::
+
+## Coverage report
+
+`summary.py` computes for each column:
+
+- Filled cells / total;
+- Coverage percentage;
+- Number of "complete" genes (all columns filled);
+- Duration, cache vs fetch counts, and failure list.
+
+This report is embedded in HTML, written to `*_summary.txt`, and included in JSON/manifest exports.
+
+## Error handling
+
+- Gene-level failure: the row is kept with `(ERROR: message)` in the first column;
+- Other genes continue to be processed;
+- Failures appear in the final report.
+
+## Version
+
+Current version: **1.1.0** (defined in `annotation/config.py`).

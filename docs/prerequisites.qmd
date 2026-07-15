@@ -1,0 +1,129 @@
+---
+title: "Prerequisites"
+---
+
+# Prerequisites and installation
+
+This page describes the environment required to run the gene annotation tool.
+
+## System requirements
+
+| Component | Minimum version | Notes |
+|-----------|-----------------|-------|
+| **Python** | 3.8+ | Tested with Python 3.10+ |
+| **pip** | recent | Python package manager |
+| **Internet connection** | — | Access to public APIs (NCBI, Ensembl, etc.) |
+| **python3-tk** | — | Required for the GUI only |
+
+### Supported platforms
+
+The tool runs on **Linux**, **macOS**, and **Windows**. On Linux (Debian/Ubuntu), install Tkinter if needed:
+
+```bash
+sudo apt install python3-tk
+```
+
+### Desktop binaries (optional)
+
+If you prefer not to install Python on the target machine, build or download a standalone app — see [Desktop App](desktop.qmd).
+
+| Requirement for *building* | Notes |
+|----------------------------|-------|
+| Python 3.8+ | Build host only |
+| `requirements-build.txt` | Includes PyInstaller |
+| `python3-tk` (Linux) | Needed so the GUI binary can ship Tk |
+
+## Python dependencies
+
+From the project root:
+
+```bash
+pip install -r requirements.txt
+# Optional editable install:
+pip install -e .
+```
+### Required packages
+
+| Package | Role |
+|---------|------|
+| `biopython` | NCBI Entrez API access |
+| `requests` | HTTP requests to Ensembl, UniProt, STRING, etc. |
+| `tqdm` | Command-line progress bar |
+| `openpyxl` | Excel export (`.xlsx`) |
+| `flask` | Local web viewer |
+
+## Configuration
+
+### NCBI email address (required)
+
+NCBI requires a valid email address to identify Entrez requests:
+
+```bash
+export NCBI_EMAIL="your.email@domain.com"
+```
+
+If this variable is not set, the default address in `config.py` is used. **Setting your own address is recommended.**
+
+### Optional environment variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `NCBI_EMAIL` | see `config.py` | Identifier for the NCBI API |
+| `NCBI_DELAY` | `0.34` | Delay (seconds) between NCBI calls |
+| `ANNOTATION_WORKERS` | `1` | Default number of parallel gene workers |
+
+Example:
+
+```bash
+export NCBI_EMAIL="researcher@lab.org"
+export NCBI_DELAY=0.5
+export ANNOTATION_WORKERS=2
+```
+
+## Quarto documentation (optional)
+
+To **build** this documentation site you need [Quarto](https://quarto.org/docs/get-started/) (≥ 1.3).
+
+The easiest way — HTTP preview in your default browser:
+
+```bash
+python3 docs/render.py
+```
+
+Opens `http://127.0.0.1:8088`. For static build + HTTP serve:
+
+```bash
+python3 docs/render.py --build --serve
+```
+
+## Verify your installation
+
+```bash
+# Check Python imports
+python3 -c "from annotation.cli import annotate_gene; print('OK')"
+
+# List genes from the sample file without calling APIs
+python3 main.py data/GeneSymbols_2.txt --dry-run
+
+# Show cache status
+python3 main.py --cache-info
+```
+
+## Sample input file
+
+The project includes `data/GeneSymbols_2.txt` with 12 genes spanning several organisms (human, mouse, plants, bacteria, etc.). Use it to test your setup:
+
+```text
+# Comments are supported with #
+RAD51,homo_sapiens
+DMD,mus_musculus
+PHYB,arabidopsis_thaliana
+```
+
+Format: one gene per line, **comma** separator, organism in Ensembl format (`species_name` in lowercase).
+
+## Known limitations
+
+- Some poorly documented species (e.g. `pinus_thunbergii`) may return `No data found` for several columns — this is expected.
+- Parallel processing (`--workers > 1`) speeds up runs but may trigger API rate limits.
+- The first run on 12 genes takes about **3–5 minutes**; the cache makes subsequent runs nearly instant.

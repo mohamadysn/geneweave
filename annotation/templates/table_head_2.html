@@ -1,0 +1,115 @@
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.css">
+  <style type="text/css" class="init">
+  a{
+  color: black;
+  }
+  .title-center {
+  text-align: center;
+  }
+  th
+  {
+  background-color : #FFFFFF;
+  }
+  .scroll {
+  max-height: 150px;
+  max-width: 300px;
+  overflow: auto;
+  }
+  .white { background-color: #FFFFFF !important; }
+  .ncbi { background-color: #93CBED !important; }
+  .ensembl { background-color: #90e0ef !important; }
+  .uniprot { background-color: #93CBED !important; }
+  .string { background-color: #90e0ef !important; }
+  .prosite { background-color: #93CBED !important; }
+  .pfam { background-color: #90e0ef !important; }
+  .pdb { background-color: #93CBED !important; }
+  .kegg { background-color: #90e0ef !important; }
+  .go { background-color: #93CBED !important; }
+  
+  .ncbi_b { background-color: #0096C7!important; }
+  .ensembl_b { background-color: #00B4D8 !important; }
+  .uniprot_b { background-color: #0096C7 !important; }
+  .string_b { background-color: #00B4D8 !important; }
+  .prosite_b { background-color: #0096C7 !important; }
+  .pfam_b { background-color: #00B4D8 !important; }
+  .pdb_b { background-color: #0096C7 !important; }
+  .kegg_b { background-color: #00B4D8 !important; }
+  .go_b { background-color: #0096C7 !important; }
+  </style>
+  <script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.js"></script>
+  <script type="text/javascript" language="javascript" src="https://cdn.datatables.net/fixedcolumns/4.0.1/js/dataTables.fixedColumns.min.js"></script>
+  <script type="text/javascript">
+  document.addEventListener("click", function (event) {
+    var anchor = event.target.closest("a[href]");
+    if (!anchor) return;
+    var href = anchor.getAttribute("href");
+    if (!href || href.charAt(0) === "#") return;
+    event.preventDefault();
+    window.open(href, "_blank", "noopener,noreferrer");
+  }, true);
+  </script>
+  <script type="text/javascript" class="init">
+  
+
+$(document).ready(function() {
+  $('#table_id').DataTable({
+        "scrollY": 750,
+        "scrollX": true,
+        "lengthMenu": [ 6, 10, 15, 20, "All" ],
+        fixedColumns:   {
+            leftColumns: 1
+        }
+    } );
+} );
+
+
+  </script>
+</head>
+<body>
+<div class="header">
+<h1 class="title-center">Automatic Annotation Table</h1>
+</div>
+<table id="table_id" class="display nowrap cell-border" style="width:100%">
+<thead>
+<tr>
+  <th>Query</th>
+  <th class='ncbi_b' colspan="4">NCBI</th>
+  <th class='ensembl_b' colspan="5">Ensembl</th>
+  <th class='uniprot_b' colspan="2">Uniprot</th>
+  <th class='string_b' colspan="2"> String</th>
+  <th class='prosite_b' colspan="2">Prosite</th>
+  <th class='pfam_b' colspan="2">Pfam</th>
+  <th class='pdb_b'>PDB</th>
+  <th class='kegg_b' colspan="2">KEGG</th>
+  <th class='go_b' colspan="3">GO</th>
+</tr>
+<tr>
+  <th>Gene Symbol and Organism</th>
+  <th class='ncbi_b' >Official Full Name</th>
+  <th class='ncbi_b' >Gene ID</th>
+  <th class='ncbi_b' >RefSeq RNA ID</th>
+  <th class='ncbi_b' >RefSeq Protein ID</th>
+  <th class='ensembl_b' >Gene ID</th>
+  <th class='ensembl_b' >Genome Browser</th>
+  <th class='ensembl_b' >Transcript ID</th>
+  <th class='ensembl_b' >Protein ID</th>
+  <th class='ensembl_b' >Orthologs</th>
+  <th class='uniprot_b' >ID</th>
+  <th class='uniprot_b'>Official Protein Name</th>
+  <th class='string_b'>ID</th>
+  <th class='string_b'>Network</th>
+  <th class='prosite_b'>Motifs</th>
+  <th class='prosite_b'>Graphical View</th>
+  <th class='pfam_b'>Domains</th>
+  <th class='pfam_b'>Graphical View</th>
+  <th class='pdb_b'>Structure</th>
+  <th class='kegg_b'>ID</th>
+  <th class='kegg_b'>Pathway</th>
+  <th class='go_b'>Molecular function</th>
+  <th class='go_b'>Cellular component</th>
+  <th class='go_b'>Biological process</th>
+</tr>
+</thead>
